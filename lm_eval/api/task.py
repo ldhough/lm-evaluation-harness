@@ -2,6 +2,7 @@ import abc
 from dataclasses import dataclass, field, asdict
 
 import re
+import os
 import ast
 import yaml
 import evaluate
@@ -11,6 +12,7 @@ import functools
 from tqdm import tqdm
 
 import datasets
+from datasets import DatasetDict
 import numpy as np
 
 from typing import Union, List, Any, Tuple, Literal
@@ -244,12 +246,10 @@ class Task(abc.ABC):
                 Fresh download and fresh dataset.
         """
         self.dataset = datasets.load_dataset(
-            path=self.DATASET_PATH,
-            name=self.DATASET_NAME,
-            data_dir=data_dir,
-            cache_dir=cache_dir,
-            download_mode=download_mode,
+            "json",
+            data_files=os.environ["PATH_TO_EVAL_DATA"]
         )
+        self.dataset = DatasetDict({"test": self.dataset["train"]})
 
     @property
     def config(self):
@@ -695,10 +695,10 @@ class ConfigurableTask(Task):
 
     def download(self, dataset_kwargs=None) -> None:
         self.dataset = datasets.load_dataset(
-            path=self.DATASET_PATH,
-            name=self.DATASET_NAME,
-            **dataset_kwargs if dataset_kwargs is not None else {},
+            "json",
+            data_files=os.environ["PATH_TO_EVAL_DATA"]
         )
+        self.dataset = DatasetDict({"test": self.dataset["train"]})
 
     def has_training_docs(self) -> bool:
         if self.config.training_split is not None:
